@@ -209,13 +209,6 @@ with st.sidebar:
                              label_visibility="collapsed")
     page = CHAPTERS[chapter_label]
     st.markdown("---")
-    st.markdown("""
-    **👥 Project Team:**
-    - **Zahra Saberi**
-    - **Yasamin Sam**
-    - **Mina Torfipour**
-    """)
-    st.markdown("---")
     st.caption("Based on: Gonzalez & Woods\n*Digital Image Processing*, 3rd Ed.")
     st.caption("Implemented in Python · NumPy · OpenCV · SciPy · Streamlit")
 
@@ -263,16 +256,6 @@ if page == "home":
 
     st.markdown("---")
     st.info("👈 Use the sidebar to navigate between chapters. Upload your own image or use a sample image.")
-
-    st.markdown("---")
-    st.markdown("""
-    ### 👥 Project Team & Authors
-    * **Zahra Saberi**
-    * **Yasamin Sam**
-    * **Mina Torfipour**
-    
-    *Digital Image Processing & Computer Vision Course Project*
-    """)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
