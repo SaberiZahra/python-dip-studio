@@ -499,52 +499,69 @@ def get_sample_images() -> dict[str, np.ndarray]:
     """
     images: dict[str, np.ndarray] = {}
 
-    try:
-        import skimage.data as skdata
-        images['cameraman'] = skdata.camera()
-        images['moon'] = skdata.moon()
-        images['coins'] = skdata.coins()
-        images['astronaut'] = skdata.astronaut()
-    except Exception:
-        pass
+    # 1. Check local assets directory first
+    assets_dir = Path(__file__).resolve().parent.parent / "assets" / "sample_images"
+    if assets_dir.exists():
+        for fname in ["cameraman", "moon", "coins", "checkerboard", "circles", "gradient", "text_pattern"]:
+            p = assets_dir / f"{fname}.png"
+            if p.exists():
+                img = cv2.imread(str(p), cv2.IMREAD_GRAYSCALE)
+                if img is not None:
+                    images[fname] = img
+        p_astro = assets_dir / "astronaut.png"
+        if p_astro.exists():
+            img_c = cv2.imread(str(p_astro), cv2.IMREAD_COLOR)
+            if img_c is not None:
+                images["astronaut"] = cv2.cvtColor(img_c, cv2.COLOR_BGR2RGB)
+
+    # 2. Fallback to skimage if any missing
+    if 'cameraman' not in images or 'moon' not in images:
+        try:
+            import skimage.data as skdata
+            if 'cameraman' not in images: images['cameraman'] = skdata.camera()
+            if 'moon' not in images: images['moon'] = skdata.moon()
+            if 'coins' not in images: images['coins'] = skdata.coins()
+            if 'astronaut' not in images: images['astronaut'] = skdata.astronaut()
+        except Exception:
+            pass
 
     H, W = 256, 256
 
-    # --- checkerboard ---
-    sq = 32  # each square is 32×32 px (8 squares per row/column)
-    cb = np.zeros((H, W), dtype=np.uint8)
-    for r in range(H // sq):
-        for c in range(W // sq):
-            if (r + c) % 2 == 0:
-                cb[r * sq:(r + 1) * sq, c * sq:(c + 1) * sq] = 255
-    images['checkerboard'] = cb
+    # 3. Fallback synthetic patterns
+    if 'checkerboard' not in images:
+        sq = 32
+        cb = np.zeros((H, W), dtype=np.uint8)
+        for r in range(H // sq):
+            for c in range(W // sq):
+                if (r + c) % 2 == 0:
+                    cb[r * sq:(r + 1) * sq, c * sq:(c + 1) * sq] = 255
+        images['checkerboard'] = cb
 
-    # --- horizontal gradient ---
-    gradient = np.tile(np.linspace(0, 255, W, dtype=np.float32), (H, 1))
-    images['gradient'] = gradient.astype(np.uint8)
+    if 'gradient' not in images:
+        gradient = np.tile(np.linspace(0, 255, W, dtype=np.float32), (H, 1))
+        images['gradient'] = gradient.astype(np.uint8)
 
-    # --- circles ---
-    circles = np.zeros((H, W), dtype=np.uint8)
-    centres = [(64, 64, 40), (64, 192, 25), (192, 64, 55), (192, 192, 30), (128, 128, 50)]
-    yy, xx = np.ogrid[:H, :W]
-    for cy, cx, r in centres:
-        mask = (yy - cy) ** 2 + (xx - cx) ** 2 <= r ** 2
-        circles[mask] = 255
-    images['circles'] = circles
+    if 'circles' not in images:
+        circles = np.zeros((H, W), dtype=np.uint8)
+        centres = [(64, 64, 40), (64, 192, 25), (192, 64, 55), (192, 192, 30), (128, 128, 50)]
+        yy, xx = np.ogrid[:H, :W]
+        for cy, cx, r in centres:
+            mask = (yy - cy) ** 2 + (xx - cx) ** 2 <= r ** 2
+            circles[mask] = 255
+        images['circles'] = circles
 
-    # --- text_pattern (simple horizontal bars simulating strokes) ---
-    text_pat = np.zeros((H, W), dtype=np.uint8)
-    for row_start in [30, 60, 90, 120, 150, 180, 210]:
-        text_pat[row_start:row_start + 8, 20:236] = 255
-    for col in [20, 60, 100, 140, 180, 220, 236]:
-        text_pat[30:220, col:col + 8] = 255
-    images['text_pattern'] = text_pat
+    if 'text_pattern' not in images:
+        text_pat = np.zeros((H, W), dtype=np.uint8)
+        for row_start in [30, 60, 90, 120, 150, 180, 210]:
+            text_pat[row_start:row_start + 8, 20:236] = 255
+        for col in [20, 60, 100, 140, 180, 220, 236]:
+            text_pat[30:220, col:col + 8] = 255
+        images['text_pattern'] = text_pat
 
-    # Fallback for cameraman/moon if skimage unavailable
     if 'cameraman' not in images:
-        images['cameraman'] = cb
+        images['cameraman'] = images['checkerboard']
     if 'moon' not in images:
-        images['moon'] = gradient.astype(np.uint8)
+        images['moon'] = images['gradient']
 
     return images
 
